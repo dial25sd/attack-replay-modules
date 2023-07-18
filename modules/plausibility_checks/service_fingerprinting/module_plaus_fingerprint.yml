@@ -1,0 +1,22 @@
+---
+name: SERVICE-FINGERPRINTING
+module_class: plausibility
+module_type: standalone 
+source: ARF
+parameters:
+  - name: IP
+    description: IP of the target machine
+    value:
+      method: event_data
+      argument: dest_ip
+  - name: PORT
+    description: Port number to check
+    value:
+      method: event_data
+      argument: dest_port
+success:
+  - strategy: output
+    argument: "Fingerprinting Error:"
+    conclusion: no
+  - strategy: fallback
+    conclusion: no

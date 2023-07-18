@@ -1,0 +1,21 @@
+# Sample template file for module metadata for the attack-replay-modules repository
+# for standalone dockerized modules of class PARAM_SCANNER
+# to be saved in the module's directory as 'module_<name>.yml'
+
+---
+name: PARAM-SCANNER-PORT # the same as for other module classes
+module_class: param_scanner
+module_type: standalone
+source: ARF
+parameters:
+  - name: IP
+    description: IP of the target machine
+    value:
+      method: event_data
+      argument: dest_ip
+  - name: SERVICE_NAME
+    description: Name of the service to be detected
+    value_default: nginx
+result: # 'result' instead of 'success': strategy to extract the searched value from the results; possible values: 'extract' and 'success'
+  strategy: extract
+  argument: "Matching service detected on port: (.*)" # regex to use (first group will be extracted) for 'extract', list of success criteria for 'success'

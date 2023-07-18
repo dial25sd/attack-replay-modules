@@ -1,0 +1,17 @@
+---
+name: PARAM-SCANNER-PORT
+module_class: param_scanner
+module_type: standalone 
+source: ARF
+parameters:
+  - name: IP
+    description: IP of the target machine
+    value:
+      method: event_data
+      argument: dest_ip
+  - name: SERVICE_NAME
+    description: Name of the service to be detected
+    value_default: nginx
+result:
+  strategy: extract
+  argument: "Matching service detected on port: (.*)"

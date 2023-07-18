@@ -1,0 +1,39 @@
+---
+name: HTTP-ENDPOINT-ACCESSIBILITY
+module_class: plausibility
+module_type: standalone
+source: ARF
+parameters:
+  - name: PROTOCOL
+    description: protocol of the HTTP endpoint to check (http or https)
+    value:
+      method: event_data
+      argument: app_proto
+  - name: HOST
+    description: Host of the HTTP endpoint to check
+    value:
+      method: event_data
+      argument: dest_ip
+  - name: PORT
+    description: Port of the HTTP endpoint to check
+    value:
+      method: event_data
+      argument: dest_port
+  - name: METHOD
+    description: HTTP method to use for checking
+    value_default: GET
+    value:
+      method: event_data
+      argument: http.http_method
+  - name: ENDPOINTS
+    description: endpoints to check
+    value_default: "/"
+success:
+  - strategy: output
+    argument: "No reachable endpoint found"
+    conclusion: no
+  - strategy: output
+    argument: "Endpoint is reachable: "
+    conclusion: yes
+  - strategy: fallback
+    conclusion: no

@@ -1,0 +1,65 @@
+# Sample template file for module metadata for the attack-replay-exploits repository
+# for Metasploit-based modules of classes EXPLOIT, SCANNER and PARAM_SCANNER
+# to be saved in the module's directory as 'module_<name>.yml'
+---
+name: MSF/exploits/http/example/example_rce # needs to be unique application-wide
+module_class: scanner # can be 'scanner' or 'exploit'
+module_type: msf # 'standalone' for standalone modules from PoC/EDB..., 'msf' for Metasploit (see different templates)
+path: exploits/http/example/example_rce # path of the module inside MSF (only for MSF modules)
+exec_mode: check # required: only to be used for MSF scanner modules: the MSF command to execute, usually is "run" (for scanner modules) or "check" (for 'check' function of exploits)
+parameters:
+  - name: Param1 # required: name of the param to declare, needs to be unique module-wide
+    description: Serves for something. # required
+    configurable: no # set to no if user should not be able to manually change param val in manual mode; default is yes
+    value_default: 80 # optional when 'value' is present; will be used if 'value' is not present or eval fails
+    value: # optional when 'value_default' is present; has higher precedence than 'value_default'
+      method: event_data # required, source or strategy to determine the param value, can be 'event_data', 'arf_arg', 'scanner', 'assemble', 'extract', 'exists' or 'random'
+      argument: http.hostname # required: argument for given strategy, meaning depends on value of strategy
+  - name: Param2
+    description: Surprise, this one too.
+    value_default: 9999 # no 'value' specified, only 'value_default'
+  - name: Param3
+    description: Surprise, this one too.
+    value: # no 'value_default' specified, only 'value'
+      method: assemble # construct the param from multiple sub-values by replacing the placeholders
+      argument: "{proto}://{host}:{port}" # string with placeholders to be replaced, placeholder string must equal the parameter name below
+      input: # required when a strategy is used instead of a source: source -> value, strategy -> input
+        - name: proto
+          method: event_data # param value source: use the SIEM event data to retrieve the value
+          argument: app_proto # use the app_proto field of the EVE-JSON data
+        - name: host
+          method: extract # param value strategy: extract the value from the input with the given regex
+          argument: (?<!\w)(([\w-]+\.)+[\w-]+)(?::\d+)?(?![\w.-]) # regex to use
+          input: # specify the input for this strategy
+            method: event_data
+            argument: http.hostname
+        - name: port
+          method: scanner # param value source: use a PARAM_SCANNER module to determine the value dynamically
+          argument:
+            name: PARAM-SCANNER-PORT # name of the module to use
+            parameters: # override some of the module's parameters
+              - name: SERVICE_NAME # override the param given by this name
+                value_default: "(?i)Apache" # new value of the parameter: match any string that case-insensitively contains 'Apache'
+success: # ways to evaluate success of a module, precedence from top to bottom
+  - strategy: session # matched when module execution spawns a session, can be 'output', 'session', 'fallback' for MSF modules
+    conclusion: yes # yes = 'module has been successful if above condition has been met', no = 'module has NOT been successful if above condition has been met'
+  - strategy: output # use the module's output
+    argument: "(?i)Exploit aborted" # regex the output should be searched for
+    conclusion: no
+  - strategy: output
+    argument: "session .* opened"
+    conclusion: yes
+  - strategy: fallback # use this value if no other strategy matched
+    conclusion: no
+payload_parameters: # parameters to configure MSF Payloads, syntax is exactly the same as for 'parameters'
+  - name: LHOST
+    description: Local host IP
+    value:
+      method: arf_arg # param value source: use a command line argument
+      argument: lhost # argument needs to be the internal argparse name (here: value of -l)
+  - name: LPORT
+    description: Local host port
+    value_default: 44444
+    value:
+      method: random # param value source: choose the value randomly since it has not impact on the verification's result
+      argument: port # possible values here: port (range 49152-65535), password (length 20)

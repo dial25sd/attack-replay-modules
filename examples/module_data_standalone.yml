@@ -1,0 +1,49 @@
+# Sample template file for module metadata for the attack-replay-modules repository
+# for standalone dockerized modules of classes EXPLOIT, SCANNER and PLAUSIBILITY_CHECK
+# to be saved in the module's directory as 'module_<name>.yml'
+---
+name: POC142536758 # needs to be unique application-wide
+module_class: exploit # can be 'scanner', 'exploit', 'plausibility' or 'param_scanner'
+module_type: standalone # 'standalone' for standalone modules from PoC/EDB..., 'msf' for Metasploit (see different templates)
+source: https://www.github.com # URL for source of module, 'ARF' for self made modules or any arbitrary string
+parameters:
+  - name: Param1 # required, param name needs to be unique module-wide
+    description: Serves for something. # required
+    configurable: no # set to no if user should not be able to manually change param val in manual mode; default is yes
+    value_default: 80 # optional when 'value' is present; will be used if 'value' is not present or eval fails
+    value: # optional when 'value_default' is present; has higher precedence than 'value_default'
+      method: event_data # required, source or strategy to determine the param value, can be 'event_data', 'arf_arg', 'scanner', 'assemble', 'extract', 'exists' or 'random'
+      argument: http.hostname # required, argument for given strategy, meaning depend on value of strategy
+  - name: Param2
+    description: Surprise, this one too.
+    value_default: 999999
+    value:
+      name: whatever
+      method: assemble # param value strategy: construct the value from the pattern and supplied values below
+      argument: "http://{host}{port}{path}" # pattern to be used. variable names from below can be used as placeholder
+      input: # use 'input' with a list for this param value strategy
+        - name: host
+          method: exists # param value strategy: use the first value that can be evaluated correctly
+          input:
+            - method: event_data
+              argument: http.hostname
+            - method: event_data # only use this value if the one above does not exist
+              argument: dest_ip
+        - name: port
+          method: random # generate a random value
+          argument: port # can be either 'port' or 'password', depending on the type of value to randomly generate
+        - name: path
+          method: extract
+          argument: ^((?:/[^/%]+)+)(?=/?\.%)  # regex to use
+          input: # use input with a single object for this param value strategy
+            method: event_data
+            argument: http.url
+success: # ways to evaluate success of a module, precedence from top to bottom
+  - strategy: output # use the module's output, can be 'output', 'exit_code', 'fallback' for standalone modules
+    argument: "connection to server at .* failed" # regex the output should be searched for
+    conclusion: no # yes = 'module has been successful if above condition has been met', no = 'module has NOT been successful if above condition has been met'
+  - strategy: exit_code
+    argument: 127 # matches this specific exit code
+    conclusion: yes
+  - strategy: fallback # use this value if no other strategy matched
+    conclusion: no
